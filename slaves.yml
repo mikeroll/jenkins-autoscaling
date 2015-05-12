@@ -1,0 +1,12 @@
+_default: &default
+    key_name: mns-devops-jenkins-slave
+    instance_type: t1.micro
+    instance_profile_arn: arn:aws:iam::794873328112:instance-profile/devops-cd-all-jenkins-slave
+    placement: eu-west-1a
+    security_group_ids: ["sg-30f58055"]
+    ami: ami-c2238bb5
+    subnet_id: subnet-81476bc7
+    
+
+test_label:
+    <<: *default
