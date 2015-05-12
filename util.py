@@ -28,7 +28,10 @@ def get_nodes(self, labels):
         node_infos = {}
         for node in nodes:
             info = self.get_node_info(node)
-            node_infos[node] = dict( (k, info[k]) for k in ['offline', 'offlineCause'] )
+            node_infos[node] = { 
+                'pending': info['offline'] and not info['offlineCause'],
+                'idle': info['idle']
+        }
 
         node_map.setdefault(label, {})['nodes'] = node_infos
 

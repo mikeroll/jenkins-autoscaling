@@ -17,7 +17,9 @@ def start_instances(label, slave_config, count):
     ami = slave_config.pop('ami')
     slave_config['min_count'] = count
     slave_config['max_count'] = count
+    idle_timeout = slave_config.pop('idle_timeout')
     reservation = conn.run_instances(ami, **slave_config)
+    slave_config['idle_timeout'] = idle_timeout
     for instance in reservation.instances:
         instance.add_tags({ 'Name': '{0}-jenkins-slave'.format(label) })
     while not all(i.state == 'running' for i in reservation.instances):
@@ -50,21 +52,31 @@ if __name__ == '__main__':
     conn = ec2.connect_to_region('eu-west-1')
     j = Jenkins('http://52.17.66.29/')
 
-    j.get_node_idle_time('test_label (i-86333660)')
-
     config = load_config()
     labels = config.keys()
     labels.remove('_default')
 
     state_map = j.get_state_map(labels)
-    print(json.dumps(state_map, indent=4))
+    # print(json.dumps(state_map,indent=4))
 
     for label, data in state_map.iteritems():
-        if data['jobs']:
-            print("{0:<8}: need {1} node(s)".format(label, len(data['jobs'])))
-            for node in start_instances(label, config[label], len(data['jobs'])):
+        candidates = [ 
+            n for (n, s) in data['nodes'].iteritems()
+            if s['pending'] or s['idle']
+        ]
+
+        to_start = len(data['jobs']) - len(candidates) 
+
+        if to_start > 0:
+            print("{0:<8}: starting {1} more node(s)".format(label, to_start))
+            for node in start_instances(label, config[label], to_start):
+                print("{0:<8}: -- {1}".format(label, node.id))
                 make_slave(j, label, node.private_ip_address, "{0} ({1})".format(label, node.id))
-        idle_nodes = [ n for (n, s) in data['nodes'].iteritems() if s['idle'] ]
+        
+        idle_nodes = [ 
+            node for node in data['nodes'] 
+            if j.get_node_idle_time(node) > config[label]['idle_timeout'] and not s['pending'] 
+        ]
 
         if idle_nodes:
             print("{0:<8}: terminating {1} idle node(s):".format(label, len(idle_nodes)))
