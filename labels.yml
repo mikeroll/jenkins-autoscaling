@@ -6,7 +6,8 @@ _default: &default
     security_group_ids: ["sg-30f58055"]
     ami: ami-c2238bb5
     subnet_id: subnet-81476bc7
-    
+    idle_timeout: 600
+
 
 test_label:
     <<: *default

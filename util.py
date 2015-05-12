@@ -2,14 +2,11 @@ from jenkins import Jenkins
 from xml.etree import ElementTree as ET
 from urllib2 import Request
 import json
+import time
 
-def get_all_labels(self):
-    jobs = [ j['name'] for j in self.get_info()['jobs'] ]
-    return [ self.get_job_label(j) for j in jobs ]
 
 def get_job_label(self, name):
-    config = ET.fromstring(self.get_job_config(name))
-    return config.find('assignedNode').text
+    return ET.fromstring(self.get_job_config(name)).find('assignedNode').text
 
 def get_queued_jobs(self):
     queue = self.get_queue_info()
@@ -22,9 +19,8 @@ def get_queued_jobs(self):
                .append(name)
     return job_map
 
-def get_nodes(self, *labels):
+def get_nodes(self, labels):
     node_map = {}
-    if not labels: labels = self.get_all_labels()
     for label in labels:
         req = Request(self.server + '/label/' + label + '/api/json')
         data = json.loads(self.jenkins_open(req))
@@ -32,7 +28,7 @@ def get_nodes(self, *labels):
         node_infos = {}
         for node in nodes:
             info = self.get_node_info(node)
-            node_infos[node] = dict( (k, info[k]) for k in ['idle', 'offline'] )
+            node_infos[node] = dict( (k, info[k]) for k in ['offline', 'offlineCause'] )
 
         node_map.setdefault(label, {})['nodes'] = node_infos
 
@@ -44,17 +40,23 @@ def get_credentials(self, domain='_'):
     creds = json.loads(data)['credentials']
     return creds.keys()
 
-def get_state_map(self):
-    state_map = self.get_nodes()
+def get_node_idle_time(self, node):
+    now = int(time.time())
+    groovy = 'script=return Jenkins.instance.getComputer("{0}").getIdleStartMilliseconds()'.format(node)
+    req = Request(self.server + 'scriptText', data=groovy)
+    idle_start = int(self.jenkins_open(req)[8:]) / 1000
+    return now - idle_start
+
+def get_state_map(self, labels):
+    state_map = self.get_nodes(labels)
     queued_jobs = self.get_queued_jobs()
     for label in state_map:
         state_map[label]['jobs'] = queued_jobs[label]['jobs'] if label in queued_jobs else {}
     return state_map
 
-
-setattr(Jenkins, 'get_all_labels',     get_all_labels)
 setattr(Jenkins, 'get_queued_jobs',    get_queued_jobs)
 setattr(Jenkins, 'get_nodes',          get_nodes)
 setattr(Jenkins, 'get_job_label',      get_job_label)
 setattr(Jenkins, 'get_credentials',    get_credentials)
+setattr(Jenkins, 'get_node_idle_time', get_node_idle_time)
 setattr(Jenkins, 'get_state_map',      get_state_map)
