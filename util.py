@@ -37,7 +37,7 @@ def get_nodes(self, labels):
 
     return node_map
 
-def get_credentials(self, domain='_'):
+def get_cred_id(self, domain='_'):
     req = Request(self.server + 'credential-store/domain/' + domain + '/api/json')
     data = self.jenkins_open(req)
     creds = json.loads(data)['credentials']
@@ -60,6 +60,6 @@ def get_state_map(self, labels):
 setattr(Jenkins, 'get_queued_jobs',    get_queued_jobs)
 setattr(Jenkins, 'get_nodes',          get_nodes)
 setattr(Jenkins, 'get_job_label',      get_job_label)
-setattr(Jenkins, 'get_credentials',    get_credentials)
+setattr(Jenkins, 'get_cred_id',        get_cred_id)
 setattr(Jenkins, 'get_node_idle_time', get_node_idle_time)
 setattr(Jenkins, 'get_state_map',      get_state_map)

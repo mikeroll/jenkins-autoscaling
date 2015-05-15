@@ -7,6 +7,7 @@ _default: &default
     ami: ami-c2238bb5
     subnet_id: subnet-81476bc7
     idle_timeout: 100
+    cred_domain: SSHSlaves
 
 
 test_label:
