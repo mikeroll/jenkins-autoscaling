@@ -12,7 +12,7 @@ import util
 
 class SlaveManager(object):
 
-    def __init__(self, ec2_conn, j, config_file, init_file='slave_init.py'):
+    def __init__(self, ec2_conn, j, config_file='labels.yml', init_file='slave_init.py'):
         super(SlaveManager, self).__init__()
         self.ec2_conn = ec2_conn
         self.j = j
