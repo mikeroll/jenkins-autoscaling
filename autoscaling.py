@@ -6,6 +6,7 @@ import json
 import time
 import yaml
 import re
+from sys import argv
 
 import util
 
@@ -68,8 +69,13 @@ class SlaveManager(object):
 
 
 if __name__ == '__main__':
+    if len(argv) >= 2:
+        j_url = argv[1]
+    else:
+        j_url = 'http://jenkins.poc.devops/'
+
     ec2_conn = ec2.connect_to_region('eu-west-1')
-    j = Jenkins('http://52.17.66.29/')
+    j = Jenkins(j_url)
     manager = SlaveManager(ec2_conn, j, 'labels.yml')
 
     labels = manager.config.keys()
