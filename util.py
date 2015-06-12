@@ -23,6 +23,7 @@ def get_nodes(self, labels):
     node_map = {}
     for label in labels:
         req = Request(self.server + 'label/' + label + '/api/json')
+        
         data = json.loads(self.jenkins_open(req))
         nodes = [ n['nodeName'] for n in data['nodes'] ]
         node_infos = {}
