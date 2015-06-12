@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     ec2_conn = ec2.connect_to_region('eu-west-1')
 
-    username, password = os.getenv('JENKINS_CREDS', ':').split(':')
+    username, password = os.getenv('SLAVEMANAGER_CREDS', ':').split(':')
     j = Jenkins(j_url, username=username, password=password)
 
     manager = SlaveManager(ec2_conn, j, 'labels.yml')
