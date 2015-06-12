@@ -2,6 +2,7 @@
 
 from jenkins import Jenkins, LAUNCHER_SSH
 from boto import ec2
+import os
 import json
 import time
 import yaml
@@ -75,7 +76,10 @@ if __name__ == '__main__':
         j_url = 'http://jenkins.poc.devops/'
 
     ec2_conn = ec2.connect_to_region('eu-west-1')
-    j = Jenkins(j_url)
+
+    username, password = os.getenv('JENKINS_CREDS', ':').split(':')
+    j = Jenkins(j_url, username=username, password=password)
+
     manager = SlaveManager(ec2_conn, j, 'labels.yml')
 
     labels = manager.config.keys()
