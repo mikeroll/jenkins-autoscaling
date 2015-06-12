@@ -7,7 +7,7 @@ _default: &default
     ami: ami-2c31995b # devops-cd-prod-jenkins-slave-ng
     subnet_id: subnet-81476bc7
     idle_timeout: 1800
-    cred_domain: mns-devops-jenkins-slave
+    cred_domain: SSHSlaves
 
 devops-cd-prod-ng:
     <<: *default
