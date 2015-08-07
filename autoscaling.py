@@ -2,6 +2,7 @@
 
 from jenkins import Jenkins, LAUNCHER_SSH
 from boto import ec2
+from base64 import b64encode
 import os
 import json
 import time
@@ -13,10 +14,11 @@ import util
 
 class SlaveManager(object):
 
-    def __init__(self, ec2_conn, j, config_file='labels.yml', init_file='slave_init.py'):
+    def __init__(self, ec2_conn, j, config_file='labels.yml', init_file='slave_init.py', manager_creds=None):
         super(SlaveManager, self).__init__()
         self.ec2_conn = ec2_conn
         self.j = j
+        self.manager_creds = manager_creds or ''
         with open(config_file, 'r') as f:
             self.config = yaml.load(f)
             self.config.pop('_default')
@@ -33,9 +35,12 @@ class SlaveManager(object):
 
     def _make_initscript(self, label):
         cred_id = self.j.get_cred_id(self.config[label]['cred_domain'])[0]
+        manager_auth = b64encode("{0}:{1}".format(*self.manager_creds)).replace('\n','')
         return self.init.replace('{{label}}', label) \
                         .replace('{{cred_id}}', cred_id) \
-                        .replace('{{jenkins_url}}', self.j.server)
+                        .replace('{{jenkins_url}}', self.j.server) \
+                        .replace('{{manager_auth}}', manager_auth)
+
 
     # --- public interface
 
@@ -80,14 +85,14 @@ if __name__ == '__main__':
     username, password = os.getenv('SLAVEMANAGER_CREDS', ':').split(':')
     j = Jenkins(j_url, username=username, password=password)
 
-    manager = SlaveManager(ec2_conn, j, 'labels.yml')
+    manager = SlaveManager(ec2_conn, j, 'labels.yml', manager_creds=(username, password))
 
     labels = manager.config.keys()
     state_map = j.get_state_map(labels)
 
     nodes_to_wait = []
     for label, data in state_map.iteritems():
-        candidates = [ 
+        candidates = [
             n for (n, s) in data['nodes'].iteritems()
             if s['pending'] or s['idle']
         ]

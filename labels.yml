@@ -9,5 +9,5 @@ _default: &default
     idle_timeout: 1800
     cred_domain: SSHSlaves
 
-devops-cd-prod-ng:
+devops-cd-prod-lol:
     <<: *default

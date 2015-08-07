@@ -1,10 +1,10 @@
 #!/usr/bin/python2
 
-# This script is a template intended to be place as userdata on an ec2 instance.
+# This script is a template intended to be placed as userdata on an ec2 instance.
 # Do not run manually
 
 
-from urllib2 import urlopen
+from urllib2 import Request, urlopen
 from urllib import urlencode
 import json
 
@@ -12,6 +12,8 @@ import json
 label="{{label}}"
 cred_id="{{cred_id}}"
 jenkins_url="{{jenkins_url}}"
+manager_auth="{{manager_auth}}"
+
 
 host=urlopen('http://169.254.169.254/latest/meta-data/local-ipv4').read()
 instance_id=urlopen('http://169.254.169.254/latest/meta-data/instance-id').read()
@@ -46,4 +48,8 @@ params = {
     "json": json.dumps(j)
 }
 
-urlopen("{0}computer/doCreateItem".format(jenkins_url), data=urlencode(params))
+
+request = Request("{0}computer/doCreateItem".format(jenkins_url), data=urlencode(params))
+if manager_auth:
+    request.add_header("Authorization", "Basic %s" % manager_auth)
+urlopen(request)
